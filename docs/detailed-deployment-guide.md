@@ -449,7 +449,7 @@ This involves launching your Web Tier EC2 instances and configuring them to serv
         - Choose the Session Manager tab.
         - Click *Connect*. This will open a shell directly in your browser.
                
-bash
+```bash
 sudo su - ec2-user
 sudo yum update -y
 sudo yum install httpd -y
@@ -473,6 +473,7 @@ sudo vim /etc/httpd/conf.d/my-app.conf
 </VirtualHost>
 
 sudo systemctl restart httpd
+```
 
 
 ## Step 9: App Tier (Flask/Gunicorn) Setup
@@ -513,7 +514,7 @@ This phase sets up your application backend, which will connect to your database
         - Choose the Session Manager tab.
         - Click *Connect*. This will open a shell directly in your browser.    
 
-bash
+```bash
 sudo su - ec2-user
 sudo yum update -y
 sudo yum install mariadb1011-client-utils -y 
@@ -574,8 +575,8 @@ WantedBy=multi-user.target
 
 sudo systemctl daemon-reload
 sudo systemctl start flaskapp
-sudo systemctl enable flaskapp`
-
+sudo systemctl enable flaskapp
+```
 
 ## Step 10: Verification:
 
