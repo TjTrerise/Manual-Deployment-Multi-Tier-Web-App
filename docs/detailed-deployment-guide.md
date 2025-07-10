@@ -449,30 +449,30 @@ This involves launching your Web Tier EC2 instances and configuring them to serv
         - Choose the Session Manager tab.
         - Click *Connect*. This will open a shell directly in your browser.
                
-`bash`
-`sudo su - ec2-user`
-`sudo yum update -y`
-`sudo yum install httpd -y`
+bash
+sudo su - ec2-user
+sudo yum update -y
+sudo yum install httpd -y
     ![Web Commands](visual-guides/8.update-instance.png)
-`sudo systemctl start httpd`
-`sudo systemctl enable httpd`
+sudo systemctl start httpd
+sudo systemctl enable httpd
 
 
-`sudo vim /etc/httpd/conf.d/my-app.conf`
+sudo vim /etc/httpd/conf.d/my-app.conf
 *paste the below code in the file*
-`<VirtualHost *:80>`
-  ` ServerAdmin webmaster@localhost`
-   `DocumentRoot /var/www/html`
- `  ErrorLog /var/log/httpd/error_log`
-  ` CustomLog /var/log/httpd/access_log combined`
+<VirtualHost *:80>
+   ServerAdmin webmaster@localhost
+   DocumentRoot /var/www/html
+   ErrorLog /var/log/httpd/error_log
+   CustomLog /var/log/httpd/access_log combined
 
-   `ProxyPreserveHost On`
-   `ProxyRequests Off`
-   `ProxyPass / http://YOUR_ACTUAL_APP_TIER_PRIVATE_IP:8080/`
-   `ProxyPassReverse / http://YOUR_ACTUAL_APP_TIER_PRIVATE_IP:8080/`
-`</VirtualHost>`
+   ProxyPreserveHost On
+   ProxyRequests Off
+   ProxyPass / http://YOUR_ACTUAL_APP_TIER_PRIVATE_IP:8080/
+   ProxyPassReverse / http://YOUR_ACTUAL_APP_TIER_PRIVATE_IP:8080/
+</VirtualHost>
 
-`sudo systemctl restart httpd`
+sudo systemctl restart httpd
 
 
 ## Step 9: App Tier (Flask/Gunicorn) Setup
@@ -513,68 +513,68 @@ This phase sets up your application backend, which will connect to your database
         - Choose the Session Manager tab.
         - Click *Connect*. This will open a shell directly in your browser.    
 
-`bash`
-`sudo su - ec2-user`
-`sudo yum update -y`
-`sudo yum install mariadb1011-client-utils -y `
-`sudo yum install git -y`
-`sudo yum install python3-pip -y`
-`sudo pip3 install Flask PyMySQL gunicorn`
+bash
+sudo su - ec2-user
+sudo yum update -y
+sudo yum install mariadb1011-client-utils -y 
+sudo yum install git -y
+sudo yum install python3-pip -y
+sudo pip3 install Flask PyMySQL gunicorn
     ![App Commands](visual-guides/9.install-pip-python-git.png)
 
-`mkdir /home/ec2-user/app`
-`vim /home/ec2-user/app/app.py `
+mkdir /home/ec2-user/app
+vim /home/ec2-user/app/app.py 
  *paste the below code in the file*
 
-`from flask import Flask`
-`import pymysql`
+from flask import Flask
+import pymysql
 
-`app = Flask(__name__)`
+app = Flask(__name__)
 
 
-`DB_HOST = "YOUR_RDS_ENDPOINT"`
-`DB_USER = "YOUR_DB_USERNAME"`
-`DB_PASSWORD = "YOUR_DB_PASSWORD"`
-`DB_NAME = "YOUR_DB_NAME"`
+DB_HOST = "YOUR_RDS_ENDPOINT"
+DB_USER = "YOUR_DB_USERNAME"
+DB_PASSWORD = "YOUR_DB_PASSWORD"
+DB_NAME = "YOUR_DB_NAME"
 
-`@app.route('/')`
-`def hello_world():`
-    `try:`
-        `conn = pymysql.connect(host=DB_HOST, user=DB_USER, password=DB_PASSWORD, database=DB_NAME, connect_timeout=5)`
-        `cursor = conn.cursor()`
-        `cursor.execute("SELECT VERSION()")`
-        `db_version = cursor.fetchone()[0]`
-        `cursor.close()`
-        `conn.close()`
-        `return f"<h1>App Tier - Hello from {app.instance_path}! Connected to MySQL: {db_version}</h1>"`
-     `except Exception as e:`
-        `return f"<h1>App Tier - Hello from {app.instance_path}! Database connection failed: {e}</h1>", 500`
+@app.route('/')
+def hello_world():
+    try:
+        conn = pymysql.connect(host=DB_HOST, user=DB_USER, password=DB_PASSWORD, database=DB_NAME, connect_timeout=5)
+        cursor = conn.cursor()
+        cursor.execute("SELECT VERSION()")
+        db_version = cursor.fetchone()[0]
+        cursor.close()
+        conn.close()
+        return f"<h1>App Tier - Hello from {app.instance_path}! Connected to MySQL: {db_version}</h1>"
+     except Exception as e:
+        return f"<h1>App Tier - Hello from {app.instance_path}! Database connection failed: {e}</h1>", 500
 
-`if __name__ == '__main__':`
-`   app.run(host='0.0.0.0', port=8080)`
+if __name__ == '__main__':
+   app.run(host='0.0.0.0', port=8080)
     ![Create Flask Application](visual-guides/9.create-flask.png)
 
 *create the systemd file*
-`sudo vim /etc/systemd/system/flaskapp.service`
+sudo vim /etc/systemd/system/flaskapp.service
 *paste the belwo code into the file*
-`[Unit]`
-`Description=Gunicorn instance to serve my Flask app`
-`After=network.target`
+[Unit]
+Description=Gunicorn instance to serve my Flask app
+After=network.target
 
-`[Service]`
-`User=ec2-user`
-`Group=ec2-user`
-`WorkingDirectory=/home/ec2-user/app`
-`ExecStart=/usr/local/bin/gunicorn --workers 4 --bind 0.0.0.0:8080 app:app`
-`Restart=always`
+[Service]
+User=ec2-user
+Group=ec2-user
+WorkingDirectory=/home/ec2-user/app
+ExecStart=/usr/local/bin/gunicorn --workers 4 --bind 0.0.0.0:8080 app:app
+Restart=always
 
-`[Install]`
-`WantedBy=multi-user.target`
+[Install]
+WantedBy=multi-user.target
     ![Create Systemd File](visual-guides/9.systemd.png)
 
-`sudo systemctl daemon-reload`
-`sudo systemctl start flaskapp`
-`sudo systemctl enable flaskapp`
+sudo systemctl daemon-reload
+sudo systemctl start flaskapp
+sudo systemctl enable flaskapp`
 
 
 ## Step 10: Verification:
